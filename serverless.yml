@@ -1,0 +1,19 @@
+org: ramphealth
+app: pdf-s3
+service: pdfToS3Lambda
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ${opt:region, 'us-west-2'}
+  endpointType: REGIONAL
+  stage: ${opt:stage, 'dev'}
+
+functions:
+  api:
+    handler: handler.generatePDF
+    events:
+      - httpApi:
+          path: /api/pdf-generate
+          method: post
