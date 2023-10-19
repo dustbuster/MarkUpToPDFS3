@@ -3,10 +3,11 @@ const url = require('url');
 class ParseText {
 
   static async convertBodyToAttributesArray(body) {
-    const text = await Conversion.base64Decode(body);
-    const entireBody = await Conversion.splitBodyIntoArray(text);
-    const filename = await Conversion.urlDecodeFileName(entireBody[0]);
-    const rawHTML = await Conversion.urlDecodeTextAttribute(entireBody[1]);
+    console.log('you made it to convertBodyToAttributesArray');
+    const text = await ParseText.base64Decode(body);
+    const entireBody = await ParseText.splitBodyIntoArray(text);
+    const filename = await ParseText.urlDecodeFileName(entireBody[0]);
+    const rawHTML = await ParseText.urlDecodeTextAttribute(entireBody[1]);
     return {
       rawHtml: rawHTML,
       filename: filename,
@@ -40,4 +41,4 @@ class ParseText {
   }
 }
 
-module.exports = Conversion;
+module.exports = ParseText;
