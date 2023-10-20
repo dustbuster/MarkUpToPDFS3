@@ -9,10 +9,33 @@ provider:
   region: ${opt:region, 'us-west-2'}
   endpointType: REGIONAL
   stage: ${opt:stage, 'dev'}
+  apiGateway:
+    binaryMediaTypes:
+      - "*/*"
+  iam:
+    role:
+      statements:
+        # Allow functions to list all buckets
+        - Effect: Allow
+          Action: 's3:ListBucket'
+          Resource: '*'
+        # Allow functions to read/write objects in a bucket
+        - Effect: Allow
+          Action:
+            - 's3:GetObject'
+            - 's3:PutObject'
+          Resource:
+            - 'arn:aws:s3:::ramp-pdf-bucket/*'
+package:
+  patterns:
+    - '!.cache/**'
+    - '!chromium-test.js'
+    - ./lib/**
+    - node_modules/puppeteer/**
 
 functions:
   api:
-    handler: handler.generatePDF
+    handler: handler.handler
     events:
       - httpApi:
           path: /api/pdf-generate
