@@ -1,6 +1,7 @@
-import chromium from "chrome-aws-lambda";
 import AWS from 'aws-sdk';
 import * as ParseText from './ParseText.js';
+import puppeteer from 'puppeteer';
+import chromium from 'chrome-aws-lambda';
 
 const s3 = new AWS.S3();
 const S3_BUCKET_NAME = 'ramp-pdf-bucket';
@@ -11,8 +12,10 @@ async function getBodyAttributes(body) {
 
 export const main = async (event) => {
   console.log('-- POST RECEIVED! --');
-  console.log('event[body].length');
-  console.log(event['body'].length);
+  if (event && event['body'].length == 0) {
+    return returnError('No body or request found!');
+  }
+
   try {
     let bodyAttributes = await getBodyAttributes(event['body']);
 
@@ -22,12 +25,17 @@ export const main = async (event) => {
 
     const filename = bodyAttributes['filename'];
     const html = bodyAttributes['rawHtml'];
+
     console.log(filename + ' being created');
 
     const additionalChromiumArgs = [
       '--font-render-hinting=none',
-      '--enable-gpu'
+      '--enable-gpu',
+      '--no-sandbox'
     ];
+    const executablePath = process.env.IS_OFFLINE
+        ? null
+        : await chromium.executablePath;
 
     const options = {
       margin: { top: "0.3in", bottom: "0.5in" },
@@ -37,23 +45,14 @@ export const main = async (event) => {
       footerTemplate: "<div style=\"text-align: right;width: 297mm;font-size: 8px;\"><span style=\"margin-right: 1cm\"><span class=\"pageNumber\"></span> of <span class=\"totalPages\"></span></span></div>"
     };
 
-    const allChromiumArgs = [...chromium.args, ...additionalChromiumArgs];
-
-    if (! chromium.args) {
-      return returnError('chromium not defined');
-    }
-
-    console.log('allChromiumArgs');
-    console.log(allChromiumArgs);
-
-    browser = await chromium.puppeteer.launch({
-      args: allChromiumArgs,
-      executablePath: await chromium.executablePath
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      executablePath: puppeteer.executablePath()
     });
 
     const page = await browser.newPage();
 
-    console.log('page');
+    await page.setCacheEnabled(false);
 
     if (page) {
       console.log('page exists');
@@ -70,9 +69,7 @@ export const main = async (event) => {
 
     const pdfBuffer = await page.pdf(options);
 
-    console.log('pdfBuffer?');
-
-    if (!pdfBuffer) {
+    if (! pdfBuffer) {
       console.log('does not exist!');
     } else {
       console.log('exist!');
@@ -83,13 +80,13 @@ export const main = async (event) => {
     let fullpath = '';
 
     if (filename) {
-      fullpath = `pdfs/${filename}.pdf`;
+      //  REMOVE AFTER TESTING - just for making mock files unique
+      const hex = (new Date()).getTime().toString(36);
+      fullpath = `pdfs/${hex}-${filename}`;
+      console.log('Creating file: '+ fullpath);
     } else {
-      console.log('No filename?');
-    }
-
-    console.log('fullpath');
-    console.log(fullpath);
+      return returnError('File name deos not exist!');
+    }    
 
     const params = {
       Bucket: S3_BUCKET_NAME,

@@ -35,6 +35,7 @@ package:
 
 functions:
   api:
+    architecture: 'x86_64'
     handler: handler.handler
     events:
       - httpApi:

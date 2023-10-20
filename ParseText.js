@@ -2,6 +2,7 @@ const url = require('url');
 
 async function convertBodyToAttributesArray(body) {
   console.log('you made it to convertBodyToAttributesArray');
+  console.log(__dirname);
   const text = await base64Decode(body);
   if (text == null) {
     return;
