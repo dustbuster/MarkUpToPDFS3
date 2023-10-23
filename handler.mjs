@@ -1,7 +1,7 @@
 import AWS from 'aws-sdk';
 import * as ParseText from './ParseText.js';
 import puppeteer from 'puppeteer';
-// import chromium from 'chrome-aws-lambda';
+import chromium from 'chrome-aws-lambda';
 
 const s3 = new AWS.S3();
 const S3_BUCKET_NAME = 'ramp-pdf-bucket';
@@ -11,11 +11,12 @@ async function getBodyAttributes(body) {
 }
 
 export const main = async (event) => {
+
   console.log('-- POST RECEIVED! --');
+
   if (event && event['body'].length == 0) {
     return returnError('No body or request found!');
   }
-
   try {
     let bodyAttributes = await getBodyAttributes(event['body']);
 
@@ -28,15 +29,6 @@ export const main = async (event) => {
 
     console.log(filename + ' being created');
 
-    // const additionalChromiumArgs = [
-    //   '--font-render-hinting=none',
-    //   '--enable-gpu',
-    //   '--no-sandbox'
-    // ];
-    // const executablePath = process.env.IS_OFFLINE
-    //     ? null
-    //     : await chromium.executablePath;
-
     const options = {
       margin: { top: "0.3in", bottom: "0.5in" },
       printBackground: true,
@@ -45,10 +37,23 @@ export const main = async (event) => {
       footerTemplate: "<div style=\"text-align: right;width: 297mm;font-size: 8px;\"><span style=\"margin-right: 1cm\"><span class=\"pageNumber\"></span> of <span class=\"totalPages\"></span></span></div>"
     };
 
-    const browser = await puppeteer.launch({
-      headless: 'new',
-      // executablePath: puppeteer.executablePath()
-    });
+    let browser = null;
+    console.log('process.env.IS_LOCAL');
+    console.log(process.env.IS_LOCAL);
+    if (process.env.IS_LOCAL === 'true') {
+      console.log('LOCAL version chromoium');
+      browser = await puppeteer.launch({
+        headless: 'new',
+        // Executable library accessible locally. 
+      });
+    } else {
+      console.log('not local version chromoium');
+      browser = await puppeteer.launch({
+        headless: 'new',
+        executablePath: '/opt/headless-chromium', // Path to the Chromium binary
+        args: ['--no-sandbox', '--disable-dev-shm-usage'],
+      });
+    }
 
     const page = await browser.newPage();
 
