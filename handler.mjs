@@ -117,8 +117,7 @@ export const main = async (event) => {
     console.log('objectParams problem?');
     console.log(objectParams);
 
-    var uploadPromise = new AWS.S3({apiVersion: '2006-03-01'}).putObject(objectParams).promise();
-
+    var uploadPromise = new AWS.S3({apiVersion: '2006-03-01', region: 'us-west-2'}).putObject(objectParams).promise();
     uploadPromise.then(
       function(data) {
         console.log("Successfully uploaded data to " + S3_BUCKET_NAME + "/" + objectParams.Key);
