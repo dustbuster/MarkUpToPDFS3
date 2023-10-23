@@ -9,30 +9,42 @@ provider:
   region: ${opt:region, 'us-west-2'}
   endpointType: REGIONAL
   stage: ${opt:stage, 'dev'}
-  timeout: 25
-  apiGateway:
-    binaryMediaTypes:
-      - "*/*"
+  timeout: 120
   iam:
-    role:
+    role: 
+      name: ramp-s3uploader
       statements:
-        # Allow functions to list all buckets
-        - Effect: Allow
-          Action: 's3:ListBucket'
-          Resource: '*'
-        # Allow functions to read/write objects in a bucket
         - Effect: Allow
           Action:
-            - 's3:GetObject'
-            - 's3:PutObject'
+            - "s3:ListBucket"
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+            - "ec2:CreateNetworkInterface"
+            - "ec2:DescribeNetworkInterfaces"
+            - "ec2:DeleteNetworkInterface"
+            - "ec2:AssignPrivateIpAddresses"
+            - "ec2:UnassignPrivateIpAddresses"
+          Resource: '*'
+        - Effect: Allow
+          Action:
+            - "s3:GetObject"
+            - "s3:PutObjectAcl"
+            - "s3:PutObjectTagging"
+            - "s3:PutObject"
+            - "s3-object-lambda:Get*"
+            - "s3-object-lambda:List*"
           Resource:
             - 'arn:aws:s3:::ramp-pdf-bucket/*'
+  apiGateway:
+    binaryMediaTypes:
+      - 'multipart/form-data'
+
 package:
   patterns:
     - '!.cache/**'
     - '!chromium-test.js'
     - ./lib/**
-    - node_modules/puppeteer/**
 
 functions:
   api:
