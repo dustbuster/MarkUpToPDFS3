@@ -20,11 +20,23 @@ async function convertBodyToAttributesArray(body) {
 
 module.exports = {
   convertBodyToAttributesArray,
+  getFileName
 };
 
 async function splitBodyIntoArray(text) {
   const urlObjectPathname = url.parse(text, true).pathname;
   return urlObjectPathname.split('&text=');
+}
+
+async function getFileName(filename) {
+  let fileArray = [];
+  if (filename.includes('/')) {
+    fileArray = filename.split('/');
+    return fileArray[fileArray.length - 1];
+  } else {
+    console.log('NOT ARRAY AND NO SLASHES, file name already okay!')
+    return filename;
+  }
 }
 
 async function base64Decode(body) {

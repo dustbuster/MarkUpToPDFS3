@@ -9,6 +9,7 @@ provider:
   region: ${opt:region, 'us-west-2'}
   endpointType: REGIONAL
   stage: ${opt:stage, 'dev'}
+  timeout: 25
   apiGateway:
     binaryMediaTypes:
       - "*/*"
