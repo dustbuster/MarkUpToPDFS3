@@ -13,7 +13,6 @@
   "license": "ISC",
   "dependencies": {
     "aws-sdk": "^2.1475.0",
-    "chrome-aws-lambda": "^10.1.0",
     "puppeteer": "^21.4.0",
     "puppeteer-core": "^21.4.0"
   }

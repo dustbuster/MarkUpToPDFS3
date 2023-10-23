@@ -1,7 +1,7 @@
 import AWS from 'aws-sdk';
 import * as ParseText from './ParseText.js';
 import puppeteer from 'puppeteer';
-import chromium from 'chrome-aws-lambda';
+// import chromium from 'chrome-aws-lambda';
 
 const s3 = new AWS.S3();
 const S3_BUCKET_NAME = 'ramp-pdf-bucket';
@@ -28,14 +28,14 @@ export const main = async (event) => {
 
     console.log(filename + ' being created');
 
-    const additionalChromiumArgs = [
-      '--font-render-hinting=none',
-      '--enable-gpu',
-      '--no-sandbox'
-    ];
-    const executablePath = process.env.IS_OFFLINE
-        ? null
-        : await chromium.executablePath;
+    // const additionalChromiumArgs = [
+    //   '--font-render-hinting=none',
+    //   '--enable-gpu',
+    //   '--no-sandbox'
+    // ];
+    // const executablePath = process.env.IS_OFFLINE
+    //     ? null
+    //     : await chromium.executablePath;
 
     const options = {
       margin: { top: "0.3in", bottom: "0.5in" },
@@ -47,7 +47,7 @@ export const main = async (event) => {
 
     const browser = await puppeteer.launch({
       headless: 'new',
-      executablePath: puppeteer.executablePath()
+      // executablePath: puppeteer.executablePath()
     });
 
     const page = await browser.newPage();
