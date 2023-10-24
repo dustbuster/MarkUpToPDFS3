@@ -19,22 +19,14 @@ provider:
       name: ramp-s3uploader
       statements:
         # Allow functions to list all buckets
-        - Effect: Allow
-          Action:
-            - 's3:ListBucket'
-            - 'logs:CreateLogGroup'
-            - 'logs:CreateLogStream'
-            - 'logs:PutLogEvents'
-            - 'ec2:CreateNetworkInterface'
-            - 'ec2:DescribeNetworkInterfaces'
-            - 'ec2:DeleteNetworkInterface'
-            - 'ec2:AssignPrivateIpAddresses'
-            - 'ec2:UnassignPrivateIpAddresses'
+        - Effect: 'Allow'
+          Action: 's3:ListBucket'
           Resource: '*'
         # Allow functions to read/write objects in a bucket
         - Effect: Allow
-          Action:
-            - 's3:GetObject'
+          Action: 
+          - - Effect: Allow
+          Action: 
             - 's3:PutObject'
             - 's3:GetObject'
             - 's3:PutObjectAcl'
@@ -43,17 +35,19 @@ provider:
             - 's3-object-lambda:Get*'
             - 's3-object-lambda:List*'
           Resource:
-            - arn:aws:s3:::ramp-pdf-bucket/*
+            - "arn:aws:s3:::ramp-pdf-bucket/*"
 package:
   patterns:
     - '!.cache/**'
+    - '!markup.html'
+    - '!array.php'
     - '!chromium-test.js'
-    - ./lib/**
 
 functions:
   api:
     architecture: 'x86_64'
     handler: handler.handler
+    memorySize: 2048
     events:
       - httpApi:
           path: /api/pdf-generate

@@ -1,13 +1,14 @@
 const url = require('url');
 
 async function convertBodyToAttributesArray(body) {
-  console.log('you made it to convertBodyToAttributesArray');
-  console.log(__dirname);
   const text = await base64Decode(body);
   if (text == null) {
+    console.log('NULL TEXT')
     return;
   }
   const entireBody = await splitBodyIntoArray(text);
+  console.log('entireBody.length');
+  console.log(entireBody.length);
   const filename = await urlDecodeFileName(entireBody[0]);
   const rawHTML = await urlDecodeTextAttribute(entireBody[1]);
   console.log('First 100 chars of HTML');

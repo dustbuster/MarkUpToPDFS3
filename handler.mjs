@@ -12,7 +12,6 @@ async function getBodyAttributes(body) {
 
 export const main = async (event) => {
   console.log('-- POST RECEIVED! --');
-
   AWS.config.update({region: "us-west-2"});
 
   if (event && event['body'].length == 0) {
@@ -117,11 +116,12 @@ export const main = async (event) => {
     console.log('objectParams problem?');
     console.log(objectParams);
 
-    var uploadPromise = new AWS.S3({apiVersion: '2006-03-01', region: 'us-west-2'}).putObject(objectParams).promise();
+    var uploadPromise = new AWS.S3().putObject(objectParams).promise();
     uploadPromise.then(
       function(data) {
         console.log("Successfully uploaded data to " + S3_BUCKET_NAME + "/" + objectParams.Key);
         return {
+          contentType: 'application/json',
           statusCode: 200,
           body: JSON.stringify({ message: 'PDF created and uploaded to S3', filename: fullpath }),
         };
