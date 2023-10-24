@@ -25,15 +25,9 @@ provider:
         # Allow functions to read/write objects in a bucket
         - Effect: Allow
           Action: 
-          - - Effect: Allow
-          Action: 
+            - 's3:*'
             - 's3:PutObject'
-            - 's3:GetObject'
-            - 's3:PutObjectAcl'
-            - 's3:PutObjectTagging'
-            - 's3:PutObject'
-            - 's3-object-lambda:Get*'
-            - 's3-object-lambda:List*'
+            - 's3-object-lambda:*'
           Resource:
             - "arn:aws:s3:::ramp-pdf-bucket/*"
 package:
