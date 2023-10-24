@@ -8,8 +8,6 @@ async function convertBodyToAttributesArray(body) {
   const entireBody = await splitBodyIntoArray(text);
   const filename = await urlDecodeFileName(entireBody[0]);
   const rawHTML = await urlDecodeTextAttribute(entireBody[1]);
-  console.log('First 100 chars of HTML');
-  console.log(rawHTML.substring(0, 100));
 
   return {
     rawHtml: rawHTML,
