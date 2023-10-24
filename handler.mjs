@@ -9,13 +9,13 @@ const S3_BUCKET_NAME = 'ramp-pdf-bucket';
 export const main = async (event) => {
   const isRunningLocally = process.env.IS_LOCAL === undefined ? false : true;
   if (event && event['body'].length == 0) {
-    return returnError('No body or request found!')
+    return returnError('No body or request found!', '')
   } 
 
   try {
     let bodyAttributes = await ParseText.convertBodyToAttributesArray(event['body']);
     if (! bodyAttributes) {
-      return returnError('HTML Not recieved');
+      return returnError('HTML Not recieved', 'See ParseText.convertBodyToAttributesArray(body)');
     }
     let filename = bodyAttributes['filename'];
     const html = bodyAttributes['rawHtml'];
@@ -63,14 +63,13 @@ export const main = async (event) => {
     if (! pdfBuffer) {
       return returnError('No PDF buffer created!');
     }
-    console.log('pdfBuffer');
-    console.log(pdfBuffer);
+
     filename = await ParseText.getFileName(filename);
 
     const randomTimeHex = isRunningLocally ? (new Date()).getTime().toString(36) : '';
     const fullFileName = 'pdfs/' + randomTimeHex + '-' + await ParseText.getFileName(filename);
 
-    console.log('File sanity check: ' + fullFileName);
+    console.log('File Path: ' + fullFileName);
 
     const data = await new AWS.S3().putObject({
       Bucket: S3_BUCKET_NAME,
@@ -90,15 +89,15 @@ export const main = async (event) => {
       body: JSON.stringify({ message: 'PDF created and uploaded to S3', filename: fullFileName }),
     };
   } catch (error) {
-    console.log(error);
+    console.log(error, error.stack);
     return returnError('Something errored in try catch!');
   }
 };
 
-export const returnError = (errorString) => {
+export const returnError = (errorString, error) => {
   return {
     statusCode: 500,
-    body: JSON.stringify({ error: errorString }),
+    body: JSON.stringify({ error: errorString, error }),
   };
 };
 
