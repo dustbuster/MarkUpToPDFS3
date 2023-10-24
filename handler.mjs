@@ -5,25 +5,18 @@ import chromium from '@sparticuz/chromium';
 
 const s3 = new AWS.S3();
 const S3_BUCKET_NAME = 'ramp-pdf-bucket';
-// NEW
-async function getBodyAttributes(body) {
-  return await ParseText.convertBodyToAttributesArray(body);
-}
 
 export const main = async (event) => {
-  console.log('-- POST RECEIVED! --');
-  AWS.config.update({region: "us-west-2"});
-
+  const isRunningLocally = process.env.IS_LOCAL === undefined ? false : true;
   if (event && event['body'].length == 0) {
-    return returnError('No body or request found!');
-  }
-  try {
-    let bodyAttributes = await getBodyAttributes(event['body']);
+    return returnError('No body or request found!')
+  } 
 
+  try {
+    let bodyAttributes = await ParseText.convertBodyToAttributesArray(event['body']);
     if (! bodyAttributes) {
       return returnError('HTML Not recieved');
     }
-    // try { - moved TRY to attempt to find error.
     let filename = bodyAttributes['filename'];
     const html = bodyAttributes['rawHtml'];
 
@@ -31,14 +24,10 @@ export const main = async (event) => {
 
     const additionalChromiumArgs = [
       '--font-render-hinting=none',
-      '--enable-gpu',
-      '--no-sandbox'
+      '--enable-gpu'
     ];
 
     const executablePath = await chromium.executablePath();
-
-    console.log('executablePath');
-    console.log(executablePath);
 
     const options = {
       margin: { top: "0.3in", bottom: "0.5in" },
@@ -54,19 +43,13 @@ export const main = async (event) => {
       args: chromium.args.concat(additionalChromiumArgs)
     };
 
-    if (process.env.IS_LOCAL === undefined) {
+    if (! isRunningLocally) {
       launchConfig.executablePath = executablePath;
     }
 
     let browser = await puppeteer.launch(launchConfig);
-
     const page = await browser.newPage();
-
     await page.setCacheEnabled(false);
-
-    if (! page) {
-      console.log('page not created');
-    }
 
     const loaded = page.waitForNavigation({
       waitUntil: "networkidle0",
@@ -75,57 +58,37 @@ export const main = async (event) => {
     await page.setContent(html);
     await loaded;
 
-    console.log('loaded');
-    console.log(loaded);
-
     const pdfBuffer = await page.pdf(options);
 
-    if (pdfBuffer) {
-      console.log('pdfBuffer');
-      console.log(pdfBuffer);
+    if (! pdfBuffer) {
+      return returnError('No PDF buffer created!');
     }
-    console.log('filename before ' + filename);
-    
-    // Just the filename
+    console.log('pdfBuffer');
+    console.log(pdfBuffer);
     filename = await ParseText.getFileName(filename);
 
-    console.log('new ver filename after ' + filename);
+    const randomTimeHex = isRunningLocally ? (new Date()).getTime().toString(36) : '';
+    const fullFileName = 'pdfs/' + randomTimeHex + '-' + await ParseText.getFileName(filename);
 
-    await browser.close();
+    console.log('File sanity check: ' + fullFileName);
 
-    let fullpath = '';
+    const data = await new AWS.S3().putObject({
+      Bucket: S3_BUCKET_NAME,
+      Key: fullFileName,
+      Body: pdfBuffer
+    }).promise();
 
-    if (filename) {
-      //  REMOVE AFTER TESTING - just for making mock files unique
-      const hex = (new Date()).getTime().toString(36);
-
-      fullpath = `pdfs/${hex}-${filename}`;
-      console.log('Creating file: '+ fullpath);
-    } else {
-      return returnError('File name deos not exist!');
+    if (isRunningLocally) {
+      // this will cause time out in lambda.
+      await browser.close();
     }
 
-    console.log('fullpath');
-    console.log(fullpath);
+    console.log("Successfully uploaded data to " + S3_BUCKET_NAME + "/" + fullFileName);
 
-    const objectParams = {
-      Bucket: S3_BUCKET_NAME,
-      Key: fullpath,
-      Body: pdfBuffer
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: 'PDF created and uploaded to S3', filename: fullFileName }),
     };
-    console.log('objectParams problem?');
-    console.log(objectParams);
-
-    var uploadPromise = new AWS.S3().putObject(objectParams).promise();
-    uploadPromise.then(
-      function(data) {
-        console.log("Successfully uploaded data to " + S3_BUCKET_NAME + "/" + objectParams.Key);
-        return {
-          contentType: 'application/json',
-          statusCode: 200,
-          body: JSON.stringify({ message: 'PDF created and uploaded to S3', filename: fullpath }),
-        };
-      });
   } catch (error) {
     console.log(error);
     return returnError('Something errored in try catch!');
@@ -138,3 +101,15 @@ export const returnError = (errorString) => {
     body: JSON.stringify({ error: errorString }),
   };
 };
+
+export const testConnectibvity = () => {
+  s3.listBuckets(function(err, data) {
+    if (err) {
+      console.log(err, err.stack);
+      return false;
+    } else {
+      console.log(data);
+      return true;
+    }
+  });
+}
