@@ -75,18 +75,11 @@ Which should result in response similar to the following:
 ```
 
 
-Alternatively, it is also possible to emulate API Gateway and Lambda locally by using `serverless-offline` plugin. In order to do that, execute the following command:
-
-```bash
-serverless plugin install -n serverless-offline
-```
-
 It will add the `serverless-offline` plugin to `devDependencies` in `package.json` file as well as will add it to `plugins` in `serverless.yml`.
 
 After installation, you can start local emulation with:
 
 ```
-serverless offline
+serverless local example:
 ```
-
-To learn more about the capabilities of `serverless-offline`, please refer to its [GitHub repository](https://github.com/dherault/serverless-offline).
+`serverless invoke local --function api -p /Users/<UserName>/absolute-path/pdfToS3Lambda/mock_data.json`
